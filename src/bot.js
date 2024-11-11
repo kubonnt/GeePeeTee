@@ -26,8 +26,27 @@ const client = new Client({
 // Initialize a collection to store bot commands
 client.commands = new Map();
 
+// Function to recursively load command files
+const loadCommands = async (dirPath) => {
+  const files = fs.readdirSync(dirPath);
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const stats = fs.statSync(filePath);
+
+    if (stats.isDirectory()) {
+      loadCommands(filePath); // Recursively load commands from subdirectories
+    } else if (file.endsWith(".js")) {
+      const command = await import(`file://${filePath}`);
+      client.commands.set(command.name, command);
+      console.log(`Command registered: ${command.name}`); // Log command registration
+    }
+  }
+};
+
 // Define the path to the 'commands' directory
 const commandsPath = path.join(__dirname, "commands");
+loadCommands(commandsPath);
 // Read all the files in the 'commands' directory
 const commandFiles = fs
   .readdirSync(commandsPath)
@@ -36,9 +55,22 @@ const commandFiles = fs
 // Loop through the command files and add them to the commands collection
 for (const file of commandFiles) {
   const commandPath = path.join(commandsPath, file);
-  const command = await import(`file://${commandPath}`);
-  // Each command file should export an object with a `name` property
-  client.commands.set(command.name, command);
+  if (fs.statSync(commandPath).isDirectory()) {
+    const subCommandFiles = fs
+      .readdirSync(commandPath)
+      .filter((f) => f.endsWith(".js"));
+    for (const subFile of subCommandFiles) {
+      const subCommand = await import(
+        `file://${path.join(commandPath, subFile)}`
+      );
+      client.commands.set(subCommand.name, subCommand);
+      console.log(`Command registered: ${subCommand.name}`);
+    }
+  } else {
+    const command = await import(`file://${commandPath}`);
+    client.commands.set(command.name, command);
+    console.log(`Command registered: ${command.name}`);
+  }
 }
 
 // Event listener for when the bot becomes ready and successfully logs in

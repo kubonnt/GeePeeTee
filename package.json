@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@discordjs/rest": "^2.4.0",
+    "axios": "^1.7.7",
     "discord-api-types": "^0.37.104",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
@@ -12,7 +13,6 @@
   "version": "1.0.0",
   "main": "src/bot.js",
   "type": "module",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/bot.js",
