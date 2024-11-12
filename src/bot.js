@@ -128,5 +128,5 @@ client.on("messageCreate", (message) => {
 //   }
 // }
 
-// Log in to Discord using the bot token from the environment varianles
+// Log in to Discord using the bot token from the environment variables
 client.login(process.env.DISCORD_BOT_TOKEN);

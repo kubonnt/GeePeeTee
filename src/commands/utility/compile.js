@@ -29,11 +29,27 @@ export async function execute(message, args) {
     csharp: "5.0.201", // Example version
   };
 
+  // Define a mapping between languages and file extensions
+  const languageToFileExtension = {
+    python: "py",
+    javascript: "js",
+    java: "java",
+    c: "c",
+    cpp: "cpp",
+    ruby: "rb",
+    csharp: "cs",
+    rust: "rs",
+  };
+
   if (!languageVersions[language]) {
     return message.reply(
       "Unsupported language. Supported languages are: python, javascript, java, c, cpp, rust, csharp."
     );
   }
+
+  // Get the appropriate file extension for the language
+  const fileExtension = languageToFileExtension[language];
+  const fileName = `main.${fileExtension}`;
 
   // Prepare the request payload for Piston
   const submission = {
@@ -41,7 +57,7 @@ export async function execute(message, args) {
     version: languageVersions[language],
     files: [
       {
-        name: "main.rs", // Ensure proper file extension for Rust
+        name: fileName, // Ensure proper file extension for Rust
         content: code,
       },
     ],
