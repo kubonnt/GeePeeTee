@@ -50,4 +50,38 @@ router.post("/message", async (req, res) => {
   }
 });
 
+// POST route to start the bot
+router.post("/start", async (req, res) => {
+  try {
+    const response = await fetch(`${BOT_API_URL}/start`, { method: "POST" });
+
+    if (!response.ok) {
+      throw new Error("Error starting bot");
+    }
+
+    const result = await response.json();
+    res.json(result);
+  } catch (error) {
+    console.error("Error starting bot:", error.message);
+    res.status(500).json({ error: "Error starting bot" });
+  }
+});
+
+// POST route to stop the bot
+router.post("/stop", async (req, res) => {
+  try {
+    const response = await fetch(`${BOT_API_URL}/stop`, { method: "POST" });
+
+    if (!response.ok) {
+      throw new Error("Error stopping bot");
+    }
+
+    const result = await response.json();
+    res.json(result);
+  } catch (error) {
+    console.error("Error stopping bot:", error.message);
+    res.status(500).json({ error: "Error stopping bot" });
+  }
+});
+
 export default router;
