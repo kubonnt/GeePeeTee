@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits, Collection } from "discord.js";
 import dotenv from "dotenv";
+import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -58,5 +59,56 @@ for (const file of eventFiles) {
       logToFile(`Error loading event ${file}: ${error.message}`);
     });
 }
+
+// Bot startup
+client.once("ready", () => {
+  console.log(`Logged in as ${client.user.tag}`);
+  logToFile(`Logged in as ${client.user.tag}`);
+});
+
+client.on("messageCreated", async (message) => {
+  if (message.author.bot) return;
+  if (!message.content.startsWith(process.env.PREFIX)) return;
+
+  const args = message.content
+    .slice(process.env.PREFIX.length)
+    .trim()
+    .split(/ +/);
+
+  const command = args.shift().toLowerCase();
+
+  if (!client.commands.has(command)) return;
+
+  try {
+    await client.commands.get(command).execute(message, args);
+  } catch (error) {
+    message.reply("There was an error trying to execute that command!");
+    console.error(error);
+    logToFile(error.message);
+  }
+});
+
+// Express server
+const app = express();
+
+app.use(express.json());
+
+app.get("/api/bot/ping", (req, res) => {
+  res.status(200).json({ message: "Bot is running" });
+  console.log("Bot is running");
+  logToFile("Bot is running");
+});
+
+// Health check endpoint
+const PORT = process.env.BOT_API_PORT || 3005;
+const server = app.listen(PORT, () => {
+  console.log(`Bot health check running on port ${PORT}`);
+  logToFile(`Bot health check running on port ${PORT}`);
+});
+
+server.on("error", (error) => {
+  console.error("Error starting server:", error);
+  logToFile(`Error starting server: ${error.message}`);
+});
 
 client.login(process.env.DISCORD_BOT_TOKEN);

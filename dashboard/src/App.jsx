@@ -27,7 +27,7 @@ function App() {
       <p>Bot Status: {status}</p>
       <div className="card">
         <button onClick={() => setStatus((status) => status + 1)}>
-          status is {status}
+          Status: {status}
         </button>
         <p>
           Edit <code>src/App.jsx</code> and save to test HMR
