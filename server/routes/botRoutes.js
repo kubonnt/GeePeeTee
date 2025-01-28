@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 
 const router = express.Router();
-const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:3005/api/bot";
+const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:3002/api/bot";
 
 // Function to check if the bot is running
 async function isBotRunning() {

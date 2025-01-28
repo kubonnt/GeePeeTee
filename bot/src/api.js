@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 import cors from "cors";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { logToFile } from "./utils/logger.js";
 import { error } from "console";
 
@@ -24,6 +24,11 @@ async function isBotRunning() {
     const response = await fetch(
       `http://localhost:${process.env.BOT_API_PORT || 3005}/api/bot/ping`
     );
+
+    if (!response.ok) {
+      throw new Error("Bot is not running");
+    }
+
     return response.ok;
   } catch (error) {
     console.error(error);
@@ -79,8 +84,8 @@ app.post("/api/bot/start", async (req, res) => {
         return res.status(500).json({ error: "Error starting bot" });
       }
 
-      console.log(`Bot started: ${stdout}`);
-      logToFile(`Bot started: ${stdout}`);
+      console.log("Bot started, with PID:", botProcess.pid);
+      logToFile(`Bot started with PID: ${botProcess.pid}`);
       res.json({ success: true, message: "Bot started" });
     }
   );
@@ -95,12 +100,35 @@ app.post("/api/bot/stop", async (req, res) => {
   }
 
   try {
-    botProcess.kill("SIGINT");
-    botProcess = null;
+    console.log("Attempting to kill bot process...");
 
-    console.log("Bot stopped.");
-    logToFile("Bot stopped.");
-    res.json({ success: true, message: "Bot stopped" });
+    if (process.platform === "win32") {
+      exec(`taskkill /pid ${botProcess.pid} /T /F`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error stopping bot: ${error.message}`);
+          logToFile(`Error stopping bot: ${error.message}`);
+          return res.status(500).json({ error: "Error stopping bot" });
+        }
+
+        console.log("Bot stopped.");
+        logToFile("Bot stopped.");
+        botProcess = null;
+        res.json({ success: true, message: "Bot stopped" });
+      });
+    } else {
+      exec(`pkill -f "node.*src/bot.js"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error stopping bot: ${error.message}`);
+          logToFile(`Error stopping bot: ${error.message}`);
+          return res.status(500).json({ error: "Error stopping bot" });
+        }
+
+        console.log("Bot stopped.");
+        logToFile("Bot stopped.");
+        botProcess = null;
+        res.json({ success: true, message: "Bot stopped" });
+      });
+    }
   } catch {
     console.error("Error stopping bot:", error.message);
     logToFile(`Error stopping bot: ${error.message}`);

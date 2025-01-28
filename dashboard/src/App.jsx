@@ -9,11 +9,19 @@ function App() {
     fetchBotStatus();
   }, []);
 
-  const fetchBotStatus = () => {
-    fetch("http://localhost:3001/api/bot/status")
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status))
-      .catch(() => setStatus("Error retrieving status"));
+  const fetchBotStatus = async () => {
+    try {
+      const res = await fetch("http://localhost:3002/api/bot/status");
+      if (!res.ok) {
+        throw new Error("Error fetching bot status");
+      }
+      const data = await res.json();
+      console.log("Fetched bot status:", data.status);
+      setStatus(data.status);
+    } catch (error) {
+      console.error("Error fetching bot status:", error);
+      setStatus("Error fetching bot status");
+    }
   };
 
   const handleStartBot = async () => {
@@ -23,8 +31,13 @@ function App() {
         method: "POST",
       });
       const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error starting bot");
+      }
+
       setStatus(result.message);
-      fetchBotStatus();
+      await fetchBotStatus();
     } catch (error) {
       console.error("Error starting bot:", error);
       setStatus("Error starting bot");
@@ -40,9 +53,15 @@ function App() {
         method: "POST",
       });
       const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error stopping bot");
+      }
+
       setStatus(result.message);
-      fetchBotStatus();
+      await fetchBotStatus();
     } catch (error) {
+      console.error("Error stopping bot:", error);
       setStatus("Error stopping bot");
     } finally {
       setLoading(false);
@@ -67,4 +86,5 @@ function App() {
     </>
   );
 }
+
 export default App;
