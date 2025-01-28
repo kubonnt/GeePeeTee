@@ -19,7 +19,7 @@ function App() {
   const handleStartBot = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/bot/start", {
+      const response = await fetch("http://localhost:3002/api/bot/start", {
         method: "POST",
       });
       const result = await response.json();
@@ -36,7 +36,7 @@ function App() {
   const handleStopBot = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/bot/stop", {
+      const response = await fetch("http://localhost:3002/api/bot/stop", {
         method: "POST",
       });
       const result = await response.json();

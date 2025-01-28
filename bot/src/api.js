@@ -1,16 +1,22 @@
 import express from "express";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
+import cors from "cors";
 import { exec } from "child_process";
 import { logToFile } from "./utils/logger.js";
+import { error } from "console";
 
 dotenv.config();
 
 // Express app
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.API_PORT || 3001;
+
+// Bot process
+let botProcess = null;
 
 // Function to check if the bot is running
 async function isBotRunning() {
@@ -58,32 +64,48 @@ app.post("/api/bot/message", async (req, res) => {
 
 // Endpoint to start the bot
 app.post("/api/bot/start", async (req, res) => {
-  exec("npm run start:bot", { cwd: "../../bot" }, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error starting bot: ${error.message}`);
-      logToFile(`Error starting bot: ${error.message}`);
-      return res.status(500).json({ error: "Error starting bot" });
-    }
+  if (botProcess) {
+    return res.status(400).json({ error: "Bot is already running" });
+  }
 
-    console.log(`Bot started: ${stdout}`);
-    logToFile(`Bot started: ${stdout}`);
-    res.json({ success: true, message: "Bot started" });
-  });
+  botProcess = exec(
+    "npm run start:bot",
+    { cwd: "../bot" },
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error starting bot: ${error.message}`);
+        logToFile(`Error starting bot: ${error.message}`);
+        botProcess = null;
+        return res.status(500).json({ error: "Error starting bot" });
+      }
+
+      console.log(`Bot started: ${stdout}`);
+      logToFile(`Bot started: ${stdout}`);
+      res.json({ success: true, message: "Bot started" });
+    }
+  );
 });
 
 // Endpoint to stop the bot
 app.post("/api/bot/stop", async (req, res) => {
-  exec("pkill -f bot/src/bot.js", (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error stopping bot: ${error.message}`);
-      logToFile(`Error stopping bot: ${error.message}`);
-      return res.status(500).json({ error: "Error stopping bot" });
-    }
+  console.log("Stopping bot...");
 
-    console.log(`Bot stopped: ${stdout}`);
-    logToFile(`Bot stopped: ${stdout}`);
+  if (!botProcess) {
+    return res.status(400).json({ error: "Bot is not running" });
+  }
+
+  try {
+    botProcess.kill("SIGINT");
+    botProcess = null;
+
+    console.log("Bot stopped.");
+    logToFile("Bot stopped.");
     res.json({ success: true, message: "Bot stopped" });
-  });
+  } catch {
+    console.error("Error stopping bot:", error.message);
+    logToFile(`Error stopping bot: ${error.message}`);
+    res.status(500).json({ error: "Error stopping bot" });
+  }
 });
 
 app.listen(PORT, () => {
